@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
+						xmlns:s="library://ns.adobe.com/flex/spark"
+						xmlns:mx="library://ns.adobe.com/flex/mx"
+						width="510" height="510" applicationComplete="init()"
+						currentState="stateWelcom" layout="absolute" name="QrCodeGen"
+						showFlexChrome="false">
+	<mx:states>
+		<s:State name="stateWelcom"/>
+		<s:State name="stateUrlGen"/>
+		<s:State name="stateContact"/>
+	</mx:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.google.zxing.BarcodeFormat;
+			import com.google.zxing.BinaryBitmap;
+			import com.google.zxing.MultiFormatWriter;
+			import com.google.zxing.Result;
+			import com.google.zxing.client.result.ParsedResult;
+			import com.google.zxing.client.result.ResultParser;
+			import com.google.zxing.common.ByteMatrix;
+			
+			import flash.events.*;
+			
+			import mx.controls.Alert;
+			import mx.graphics.codec.PNGEncoder;
+			
+			import spark.components.TextArea;
+			import spark.components.WindowedApplication;
+			import spark.events.IndexChangeEvent;
+
+			private var myWriter:MultiFormatWriter;
+			private var QR_Size:Number=100;
+			private var QRcontents:String;
+			
+			private function init():void{
+				setTimeout(switchToUrlState,1000);
+			}
+			private function switchToUrlState():void{
+				currentState="stateUrlGen";
+			}
+			
+			private function setQrType():void{
+				QRcontents="";
+				var selectedType:String=this.select_qrType.selectedItem;				
+				
+				if(selectedType=="URL QR Code"){
+					currentState="stateUrlGen";
+				}else if(selectedType=="Contact QR Code"){
+					currentState="stateContact";
+				}
+			}
+			
+			private function moveIT(event:MouseEvent):void{
+				nativeWindow.startMove();
+			}
+			private function checkContentField(e:Event):void{
+				this.label_error.visible=false;
+				var sender:String=e.currentTarget.id;
+				var thisState:String=currentState;
+				
+				if(thisState=="stateUrlGen"){
+					QRcontents = this.text_qrUrlContent.text;
+					if(QRcontents==""){
+						this.label_error.text='You must enter some contents for the QR Code';
+						this.label_error.visible=true;
+						return;
+					}else{
+						if(sender=="button_generate"){
+							generateQRCode();
+						}else if(sender=="button_save"){
+							saveQRCode();
+						}else{
+							this.label_error.text='There was an unknown error.';
+							this.label_error.visible=true;
+							return;
+						}
+					}
+				}else if(thisState=="stateContact"){
+					if(this.text_qrContactName.text==""){
+						this.label_error.text='You must enter a "Full Name" for the Contact';
+						this.label_error.visible=true;
+						return;
+					}
+					var fullName:String=	"N:"+this.text_qrContactName.text+";";
+					var nickName:String=	(this.text_qrContactNick.text!="") 		? "NICKNAME:"+this.text_qrContactNick.text+";" : "";
+					var telephone:String=	(this.text_qrContactTel.text!="") 		? "TEL:"+this.text_qrContactTel.text+";" : "";
+					var address1:String=	(this.text_qrContactAddress1.text!="") 	? "ADR:"+this.text_qrContactAddress1.text+";" : "";
+					var address2:String=	(this.text_qrContactAddress2.text!="") 	? "ADR:"+this.text_qrContactAddress2.text+";" : "";
+					var email:String=		(this.text_qrContactEmail.text!="") 	? "EMAIL:"+this.text_qrContactEmail.text+";" : "";
+					var website:String=		(this.text_qrContactURL.text!="") 		? "URL:"+this.text_qrContactURL.text+";" : "";
+					
+					QRcontents="MECARD:"+fullName+nickName+telephone+address1+address2+email+website+";";
+					Alert.show(QRcontents);
+					
+					if(sender=="button_generate"){
+						generateQRCode();
+					}else if(sender=="button_save"){
+						saveQRCode();
+					}else{
+						this.label_error.text='There was an unknown error.';
+						this.label_error.visible=true;
+						return;
+					}
+					
+					//MECARD:N:Owen,Sean;ADR:76 9th Avenue, 4th Floor, New York, NY 10011;TEL:+12125551212;EMAIL:srowen@example.com;;
+				}
+				
+			}
+			private function generateQRCode():void{
+				countContentLength();
+				
+				this.label_error.visible=false;
+				// read input string
+				 
+				myWriter = new MultiFormatWriter();
+				try{
+					// try to encode the string
+					var result:ByteMatrix = (myWriter.encode(QRcontents,BarcodeFormat.QR_CODE,300,300)) as ByteMatrix;
+				}
+				catch (e:Error){
+					this.label_error.text='An error occurred during the encoding process';
+					this.label_error.visible=true;
+					return;
+				}
+				// try to generate an image with the result data
+				var bmpd:BitmapData = new BitmapData(300, 300, true);
+				var bmp:Bitmap = new Bitmap(bmpd);            	
+				this.image_qrCode.source = bmp;
+				for (var h:int=0;h<300;h++){
+					for (var w:int=0;w<300;w++){
+						if (result._get(w,h) == 0){
+							bmpd.setPixel(w,h, 0);
+						}else{
+							bmpd.setPixel(w,h, 0xFFFFFF);
+						}		
+					}
+				}
+			}
+			private function closeApp(event:MouseEvent):void{
+				// Function to exit application
+				event.preventDefault();
+				for (var i:int=NativeApplication.nativeApplication.openedWindows.length-1;i>=0;--i){
+					NativeWindow(NativeApplication.nativeApplication.openedWindows[i]).close();
+				}
+			}
+			
+			private function countContentLength():void{
+				// Function to count the length of the QR content text
+				if(currentState=="stateUrlGen"){
+					
+				}else if(currentState=="stateContact"){
+					
+				}
+					
+			}
+			
+			private function saveQRCode():void{
+				countContentLength();
+				
+				this.label_error.visible=false;
+				// read input string
+				myWriter = new MultiFormatWriter();
+				try{
+					// try to encode the string
+					var result:ByteMatrix = (myWriter.encode(QRcontents,BarcodeFormat.QR_CODE,QR_Size,QR_Size)) as ByteMatrix;
+				}
+				catch (e:Error){
+					this.label_error.text='An error occurred during the encoding process';
+					this.label_error.visible=true;
+					return;
+				}
+				// try to generate an image with the result data
+				var bmpd:BitmapData = new BitmapData(QR_Size, QR_Size, true);
+				for (var h:int=0;h<QR_Size;h++){
+					for (var w:int=0;w<QR_Size;w++){
+						if(result._get(w,h)==0){
+							bmpd.setPixel(w,h, 0);
+						}else{
+							bmpd.setPixel(w,h, 0xFFFFFF);
+						}		
+					}
+				}
+				// create new instance of encoder
+				var pngenc:PNGEncoder = new PNGEncoder();
+				
+				//encode the bitmapdata object and keep the encoded ByteArray
+				var imgByteArray:ByteArray = pngenc.encode(bmpd);
+
+				try{
+					//create a file reference
+					var myFileReference:FileReference = new FileReference();
+					myFileReference.save(imgByteArray,"QR_Code.png");
+				}
+				catch(e:Error){
+					this.label_error.text=e.message;
+					this.label_error.visible=true;
+					return;
+				}
+				
+				generateQRCode();
+			}
+			private function getQR_Size():Number{
+				return this.QR_Size;
+			}
+			private function setQR_Size():void{
+				this.QR_Size=this.select_size.selectedItem;
+			}
+			private function aboutData():void{
+				var aboutContent:String=new String();
+				aboutContent+="Version: 1.1.0\n";
+				aboutContent+="Author: w3bguy\n";
+				aboutContent+="Copyright: 2011 Charles (w3bguy) Bastian\n\n";
+				aboutContent+="Google+: http://gplus.to/w3bguy\n";
+				aboutContent+="Facebook: http://www.facebook.com/w3bguy\n";
+				aboutContent+="Twitter: http://Twitter.com/w3bguy\n";
+				aboutContent+="LinkedIn: http://www.linkedin.com/in/CharlesBastian\n";
+				aboutContent+="Blog: http://w3bguy.wordpress.com\n";
+				aboutContent+="\r\n";
+				Alert.show(aboutContent,"DeskTop URL QR Code Generator",mx.controls.Alert.OK);
+			}
+		]]>
+	</fx:Script>
+	
+	<s:BorderContainer id="appArea" x="0" y="0" width="510" height="510" backgroundColor="#404040"
+					   mouseDown="{this.moveIT(event)}">
+		
+		<s:DropDownList id="select_qrType" includeIn="stateContact,stateUrlGen" x="10" y="10"
+						width="150" change="setQrType()" prompt="URL QR Code">
+			<s:ArrayCollection>
+				<fx:String>URL QR Code</fx:String>
+				<fx:String>Contact QR Code</fx:String>
+			</s:ArrayCollection>
+		</s:DropDownList>
+		
+		<mx:Label id="label_titleURL" includeIn="stateContact,stateUrlGen" x="168" y="6" width="330"
+				  color="#C0C0C0" enabled="true" fontFamily="Courier New" fontSize="20"
+				  text="URL QR Code Generator"
+				  text.stateContact="Contact QR Code Generator"
+				  textAlign="right"/>
+		
+		<s:TextInput id="text_qrUrlContent" includeIn="stateUrlGen" x="10" y="74" width="325"
+					 color="#808080"
+					 contentBackgroundColor="#CCCCCC"
+					 maxChars="4000" prompt="type URL here"/>
+		
+		<mx:Image id="image_qrCode" includeIn="stateContact,stateUrlGen" x="348" y="74"
+				  width="150" height="150"/>
+		
+		<s:DropDownList id="select_size" includeIn="stateContact,stateUrlGen" x="10" y="39"
+						change="setQR_Size()" enabled="true" prompt="150">
+			<s:ArrayCollection>
+				<fx:Number>50</fx:Number>
+				<fx:Number>100</fx:Number>
+				<fx:Number>150</fx:Number>
+				<fx:Number>200</fx:Number>
+				<fx:Number>250</fx:Number>
+				<fx:Number>300</fx:Number>
+				<fx:Number>350</fx:Number>
+				<fx:Number>400</fx:Number>
+				<fx:Number>450</fx:Number>
+				<fx:Number>500</fx:Number>
+				<fx:Number>600</fx:Number>
+				<fx:Number>700</fx:Number>
+				<fx:Number>800</fx:Number>
+				<fx:Number>900</fx:Number>
+				<fx:Number>1000</fx:Number>
+			</s:ArrayCollection>
+		</s:DropDownList>
+		<s:Label id="label_size" includeIn="stateContact,stateUrlGen" x="130" y="39" width="95"
+				 height="21" color="#C0C0C0" fontWeight="bold" paddingLeft="0"
+				 text="Saved File Size" verticalAlign="middle"/>
+		
+		<s:Image id="img_logoWelcom" includeIn="stateWelcom" x="129" y="95"
+				 source="@Embed('file:///D:/DeveloperStuff/AirApplications/assets/qrCode_250.png')"/>
+		
+		<s:Label id="label_byW3bguyWelcom" includeIn="stateWelcom" x="79" y="391" color="#808080"
+				 fontFamily="Courier New" fontSize="16" fontWeight="bold"
+				 text="Created by Charles (w3bguy) Bastian"/>
+		
+		<s:Label id="label_error" includeIn="stateContact,stateUrlGen" visible="false" x="10"
+				 y="284" width="488" height="160" backgroundColor="#505050" color="#CC0011"
+				 fontFamily="Arial" fontSize="16" 
+				 fontWeight="bold" paddingLeft="10"
+				 textAlign="center" verticalAlign="middle"/>
+		
+		<s:Button id="button_exit" x="206" y="477" label="Exit" click="closeApp(event)"/>
+		
+		<mx:Button id="button_generate" includeIn="stateContact,stateUrlGen" x="10" y="477"
+				   width="110" label="Generate" 
+				   buttonDown="{this.checkContentField(event);}"/>
+		
+		<mx:Button id="button_save" includeIn="stateContact,stateUrlGen" x="128" y="477" label="Save"
+				   buttonDown="{this.checkContentField(event);}" enabled="true"/>
+		
+		<s:Button id="button_w3bguy" includeIn="stateContact,stateUrlGen" x="451" y="452" width="50" height="50"
+				  buttonDown="{this.aboutData();}"
+				  icon="@Embed('file:///D:/DeveloperStuff/developerIcons/W3BGUY_icon_50px.png')"/>
+		<s:TextInput color="#808080" contentBackgroundColor="#CCCCCC" includeIn="stateContact" x="10" y="74" width="325" id="text_qrContactName" prompt="Full Name"/>
+		<s:TextInput color="#808080" contentBackgroundColor="#CCCCCC" includeIn="stateContact" x="10" y="104" width="325" id="text_qrContactNick" prompt="Nickname"/>
+		<s:TextInput color="#808080" contentBackgroundColor="#CCCCCC" includeIn="stateContact" x="10" y="134" width="325" id="text_qrContactTel" prompt="Telephone"/>
+		<s:TextInput color="#808080" contentBackgroundColor="#CCCCCC" includeIn="stateContact" x="10" y="164" width="325" id="text_qrContactAddress1" prompt="Address 1"/>
+		<s:TextInput color="#808080" contentBackgroundColor="#CCCCCC" includeIn="stateContact" x="10" y="194" width="325" id="text_qrContactAddress2" prompt="Address 2"/>
+		<s:TextInput color="#808080" contentBackgroundColor="#CCCCCC" includeIn="stateContact" x="10" y="224" width="325" id="text_qrContactEmail" prompt="Email"/>
+		<s:TextInput color="#808080" contentBackgroundColor="#CCCCCC" includeIn="stateContact" x="10" y="254" width="325" id="text_qrContactURL" prompt="Website"/>
+		
+	</s:BorderContainer>
+</mx:WindowedApplication>

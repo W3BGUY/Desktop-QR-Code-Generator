@@ -1,0 +1,22 @@
+Version 2.0.0 (2011.07.30)
+	-Added Splash screen;
+	-Added Contact (MECARD) QR Code Generator;
+	
+---------------------------------------------------------------------------------
+
+Version 1.2.0 (2011.07.25)
+	-Added additional save sizes (50/100/150)
+
+---------------------------------------------------------------------------------
+
+Version 1.1.0 (2011.07.24)
+	-Updated <filename> to "Desktop QR Code Generator"
+	-Updated <name> to "Desktop QR Code Generator Installer"
+	-Updated <versionNumber> to "1.1.0"
+	-Updated <versionLabel> to "1.1"
+	-Updated <description> to "This is a Desktop QR Code Generator.  Version 1.1.0 covers the creation and saving of URL QR Codes."
+	
+---------------------------------------------------------------------------------
+
+Version 1.0.0 (2011.07.22)
+	-Creates QR Code, from given URL, with ability to save as a .png file.
